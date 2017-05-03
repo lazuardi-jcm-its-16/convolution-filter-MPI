@@ -16,10 +16,15 @@
 #define filter_sum 1
 //int filter[9] = { 1, 2, 1, 2, 4, 2, 1, 2, 1 };
 //int filter[9] = {0,1,0,1,-4,1,0,1,0}; // Edge detect
-int filter[9] = {0,-1,0,-1,5,-1,0,-1,0};
+//int filter[9] = {0,-1,0,-1,5,-1,0,-1,0};
 //int filter[9] = {0,0,0,-1,1,0,0,0,0};
-//int filter[9] = {0,0,0,0,1,0,0,0,0};
-
+//int filter[9] = {0,-1,0,0,2,0,0,0,0}; // edge
+//int filter[9] = {0,2,0,2,2,2,0,2,0}; // Blur
+//int filter[9] = {0,0,0,0,3,0,0,0,0};
+//int filter[9] = {-1,-1,-1,-1,9,-1,-1,-1,-1}; // sharpen
+//int filter[9] = {1,  1,  1, 1, -7,  1, 1,  1,  1}; // sharpen
+//int filter[9] = {-1, -1,  0,-1,  0,  1,0,  1,  1}; // embooss
+int filter[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1}; // mean and median
 // Forward declarations
 int calculate_filtered_pixel(int pixel_idx, int* src_array, int width,
                             int height, int* filter);

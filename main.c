@@ -53,11 +53,11 @@ int main(int argc, char *argv[])
     int isBW = atoi(argv[5]);
     int convergence_rounds = -1;*/
     
-    char* filename = "lena512.bmp";
+    char* filename = "lena512color.tiff";
     int img_width = 512;
     int img_height = 512;
     int filter_rounds = 1;
-    int isBW = 1;
+    int isBW = 0;
     int convergence_option = 0;
     int convergence_rounds = -1;
     
