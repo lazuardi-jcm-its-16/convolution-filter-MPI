@@ -28,7 +28,7 @@ unsigned char* convert_img(int* image, int img_height, int img_width);
 
 int main(int argc, char *argv[])
 {
-
+    /*
     if ( argc < 7 )
     {
         printf("Wrong number of parameters given.\n");
@@ -51,8 +51,16 @@ int main(int argc, char *argv[])
     int img_height = atoi(argv[3]);
     int filter_rounds = atoi(argv[4]);
     int isBW = atoi(argv[5]);
+    int convergence_rounds = -1;*/
+    
+    char* filename = "lena512.bmp";
+    int img_width = 512;
+    int img_height = 512;
+    int filter_rounds = 1;
+    int isBW = 1;
+    int convergence_option = 0;
     int convergence_rounds = -1;
-
+    
     if ( convergence_option == 1 )
         convergence_rounds = atoi(argv[7]);
 
@@ -67,10 +75,14 @@ int main(int argc, char *argv[])
 
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+    
 
     int block_width = img_width / sqrt(numprocs) + 2;
     int block_height = img_height / sqrt(numprocs) + 2;
-
+    
+    
+    
     // Create new communicator (of Cartesian topology)
     int dims[2] = {(int) sqrt(numprocs), (int) sqrt(numprocs)};
     int cyclic[2] = {1, 1};
@@ -103,6 +115,8 @@ int main(int argc, char *argv[])
             double end_time = MPI_Wtime();
 
             printf("%f\n", end_time - start_time);
+            
+            /*
             // write BW image as raw file
             FILE* output = fopen("output.raw", "wb");
             unsigned char* img_buffer = malloc(img_height * img_width *
@@ -113,7 +127,51 @@ int main(int argc, char *argv[])
                 img_buffer[i] = (unsigned char) image[i];
             }
             fwrite(img_buffer, sizeof(char), img_height * img_width, output);
-            fclose(output);
+            fclose(output);*/
+            
+            
+            FILE *f;
+            unsigned char *img_buffer = NULL;
+            int filesize = 54 + 3*img_width*img_height;  //w is your image width, h is image height, both int
+            if( img_buffer )
+                free( img_buffer );
+            img_buffer = (unsigned char *)malloc(3*img_width*img_height);
+            memset(img_buffer,0,sizeof(img_buffer));
+            
+            int i;
+            for (i = 0; i < img_height * img_width; i++) {
+                img_buffer[i] = (unsigned char) image[i];
+            }
+            
+            unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};
+            unsigned char bmpinfoheader[40] = {40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};
+            unsigned char bmppad[1] = {0};
+
+            bmpfileheader[ 2] = (unsigned char)(filesize    );
+            bmpfileheader[ 3] = (unsigned char)(filesize>> 8);
+            bmpfileheader[ 4] = (unsigned char)(filesize>>16);
+            bmpfileheader[ 5] = (unsigned char)(filesize>>24);
+
+            bmpinfoheader[ 4] = (unsigned char)(       img_width    );
+            bmpinfoheader[ 5] = (unsigned char)(       img_width>> 8);
+            bmpinfoheader[ 6] = (unsigned char)(       img_width>>16);
+            bmpinfoheader[ 7] = (unsigned char)(       img_width>>24);
+            bmpinfoheader[ 8] = (unsigned char)(       img_height    );
+            bmpinfoheader[ 9] = (unsigned char)(       img_height>> 8);
+            bmpinfoheader[10] = (unsigned char)(       img_height>>16);
+            bmpinfoheader[11] = (unsigned char)(       img_height>>24);
+
+            f = fopen("output.bmp","wb");
+            fwrite(bmpfileheader,1,14,f);
+            fwrite(bmpinfoheader,1,40,f);
+            for(i=0; i<img_height; i++)
+            {
+                fwrite(img_buffer+(img_width*(img_height-i-1)),3,img_width,f);
+                fwrite(bmppad,1,(4-(img_width)%4)%4,f);
+            }
+            fclose(f);
+            
+            
             free(img_buffer);
             free(image);
         }
@@ -140,22 +198,72 @@ int main(int argc, char *argv[])
                 image_buffer[i] = convert_img(rgb_img_buffer[i], img_height, img_width);
                 free(rgb_img_buffer[i]);
             }
-            FILE* output = fopen("/tmp/output.raw", "wb");
+            /*
+            FILE* output = fopen("output.raw", "wb");
             unsigned char* image = malloc( 3 * img_height * img_width * sizeof(unsigned char));
             for ( i = 0 , j = 0; i < img_height * img_width; i++ , j += 3 )
             {
                 image[j] = image_buffer[0][i];
                 image[j+1] = image_buffer[1][i];
                 image[j+2] = image_buffer[2][i];
+                
             }
             fwrite(image, sizeof(char), 3 * img_height * img_width, output);
-            fclose(output);
+            fclose(output);*/
+            
+            
+            
+            FILE *f;
+            unsigned char *image = NULL;
+            int filesize = 54 + 3*img_width*img_height;  //w is your image width, h is image height, both int
+            if( image )
+                free( image );
+            image = (unsigned char *)malloc(3*img_width*img_height);
+            memset(image,0,sizeof(image));
+
+            for ( i = 0 , j = 0; i < img_height * img_width; i++ , j += 3 )
+            {
+                image[j] = image_buffer[0][i];
+                image[j+1] = image_buffer[1][i];
+                image[j+2] = image_buffer[2][i];
+                
+            }
+
+            unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};
+            unsigned char bmpinfoheader[40] = {40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};
+            unsigned char bmppad[3] = {0,0,0};
+
+            bmpfileheader[ 2] = (unsigned char)(filesize    );
+            bmpfileheader[ 3] = (unsigned char)(filesize>> 8);
+            bmpfileheader[ 4] = (unsigned char)(filesize>>16);
+            bmpfileheader[ 5] = (unsigned char)(filesize>>24);
+
+            bmpinfoheader[ 4] = (unsigned char)(       img_width    );
+            bmpinfoheader[ 5] = (unsigned char)(       img_width>> 8);
+            bmpinfoheader[ 6] = (unsigned char)(       img_width>>16);
+            bmpinfoheader[ 7] = (unsigned char)(       img_width>>24);
+            bmpinfoheader[ 8] = (unsigned char)(       img_height    );
+            bmpinfoheader[ 9] = (unsigned char)(       img_height>> 8);
+            bmpinfoheader[10] = (unsigned char)(       img_height>>16);
+            bmpinfoheader[11] = (unsigned char)(       img_height>>24);
+
+            f = fopen("output.bmp","wb");
+            fwrite(bmpfileheader,1,14,f);
+            fwrite(bmpinfoheader,1,40,f);
+            for(i=0; i<img_height; i++)
+            {
+                fwrite(image+(img_width*(img_height-i-1)*3),3,img_width,f);
+                fwrite(bmppad,1,(4-(img_width*3)%4)%4,f);
+            }
+            fclose(f);
+            
             for ( i = 0; i < 3; i++)
             {
                 free(image_buffer[i]);
             }
             free(image_buffer);
             free(image);
+            
         }
         free(rgb_img_buffer);
     }

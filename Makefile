@@ -3,7 +3,7 @@ FLAGS = -c
 LINK_FLAGS = -lm
 OBJS = main.o send_wrappers.o recv_wrappers.o initializations.o processing_img.o
 EXECUTABLE_NAME = parallel-convolution
-OUTPUT = output.raw
+OUTPUT = output.bmp
 
 # Compile
 all: $(OBJS)
